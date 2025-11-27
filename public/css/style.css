@@ -1,0 +1,194 @@
+.form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.brand-logo {
+    width: 150px;
+    height: auto;
+}
+
+.brand-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.brand-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.brand-icon img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    /* keeps logos from stretching */
+}
+
+.brand-icon:hover {
+    transform: scale(1.1);
+    background-color: #e9ecef;
+}
+
+.brand-icon .brand-name {
+    font-size: 0.7rem;
+    margin-top: 5px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.brand-icon.selected {
+    background-color: #E2131C;
+    color: rgb(255, 255, 255);
+    width: 70px;
+    height: 70px;
+}
+
+.file-upload-btn {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.submit-btn {
+    background-color: #E2131C;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Wrapper */
+.header-wrapper {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+/* RED BANNER */
+.top-banner {
+    background-color: #E2131C;
+    color: white;
+    padding: 50px 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+.top-banner p {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.top-banner .duplicate {
+    opacity: 0.8;
+    margin-bottom: 50px;
+    /* Slight ghost effect like your image */
+}
+
+/* WHITE CARD */
+.white-card {
+    background: #f7f6f6;
+    margin: -80px auto 0;
+    width: 75%;
+    padding: 10px;
+    border-radius: 15px;
+}
+
+/* LOGO */
+.samdo-logo {
+    width: 260px;
+    height: auto;
+}
+
+/* BLUE EVENT TEXT */
+.event-text {
+    margin-top: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #007bff;
+    /* Same blue as your sample */
+}
+
+.file-badge {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.file-badge .btn-close {
+    margin-left: 8px;
+    font-size: 0.5rem;
+    padding: 0.1rem;
+}
+
+.add-contact-btn,
+.remove-contact-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    background-color: #E2131C;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+}
+
+.add-contact-btn:hover {
+    background-color: #E2131C;
+}
+
+.remove-contact-btn {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border-color: #333333 !important;
+}
+
+.spinner-border-sm-custom {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+.searchable-select .form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background-size: 12px;
+    padding-right: 30px;
+}
+
+.btn-outline-secondary.active {
+    background-color: #E2131C !important;
+    color: white !important;
+    border-color: #E2131C !important;
+}
