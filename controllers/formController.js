@@ -10,6 +10,7 @@ import { addRowToGoogleSheet, getOrCreateSheet } from '../services/excelService.
 
 export const submitForm = async (req, res) => {
   try {
+    
     const formData = {
       businessInfo: {
         contactType: req.body.contactType,
@@ -26,7 +27,6 @@ export const submitForm = async (req, res) => {
       comments: req.body.comment,
       newsletter: req.body.newsletter === 'true'
     };
-
     const today = new Date().toISOString().split('T')[0];
 
     // Root folder
