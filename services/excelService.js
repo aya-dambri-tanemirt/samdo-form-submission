@@ -3,12 +3,12 @@ import { google } from 'googleapis';
 import fs from 'fs';
 import path from 'path';
 
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials', 'client_secret_sheets.json');
+const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials', 'credentials.google.json');
 const TOKEN_PATH = path.join(process.cwd(), 'credentials', 'token_sheets.json');
 
-const HEADERS = [
-  'Business Name', 'Category', 'Country', 'Website', 'Target Market',
-  'Names', 'Phones', 'Emails', 'Occupations', 'Prefer Languages',
+export const HEADERS = [
+  'ID', 'Phones', 'Submission Date', 'Business Name', 'Category', 'Country', 'Website', 'Target Market', 
+  'Names', 'Emails', 'Occupations', 'Prefer Languages',
   'Brand', 'Other Brand', 'Key Contact Person', 'Comments', 'PDF'
 ];
 
@@ -64,9 +64,9 @@ async function getOrCreateSheetTab(sheets, spreadsheetId, sheetName) {
     return sheetName;
   }
 
-  // If only "Feuille 1" exists, rename it
-  if (tabs.length === 1 && tabs[0] === "Feuille 1") {
-    console.log(`[Sheets] Renaming default tab "Feuille 1" to "${sheetName}"`);
+  // If only "Sheet1" exists, rename it
+  if (tabs.length === 1 && tabs[0] === "Sheet1") {
+    console.log(`[Sheets] Renaming default tab "Sheet1" to "${sheetName}"`);
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: {
@@ -119,17 +119,33 @@ export async function addRowToGoogleSheet(formData, sheetId, pdfId) {
 
   const sheetName = await getOrCreateSheetTab(sheets, sheetId, tabName);
 
-  // Use semicolon in HYPERLINK for locales like FR (safe: prefer semicolon)
+  // Get current rows to calculate next ID
+  const existing = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: `${sheetName}!A:A` // only first column (ID)
+  });
+
+  const currentRows = existing.data.values || [];
+  let nextId = 1; // default if empty
+  if (currentRows.length > 1) { // skip header
+    const lastIdCell = currentRows[currentRows.length - 1][0]; 
+    nextId = parseInt(lastIdCell) + 1;
+  }
+
+  // Build PDF link
   const pdfLink = pdfId ? `=HYPERLINK("https://drive.google.com/file/d/${pdfId}/view?usp=sharing";"Open PDF")` : '';
+  const now = formatTimestamp();
 
   const values = [[
+    nextId,
+    formData.contacts.map(c => `${c.countryCode || ''}${c.phone || ''}`).join('; '), // Phones
+    now, // Submission Date
     formData.businessName || formData.businessInfo?.businessName || '',
     formData.category || formData.businessInfo?.category || '',
     formData.country || formData.businessInfo?.country || '',
     formData.website || formData.businessInfo?.website || '',
     (formData.targetMarkets || formData.businessInfo?.targetMarkets || []).join?.(', ') || '',
     formData.contacts.map(c => c.name).join('; '),
-    formData.contacts.map(c => `${c.countryCode || ''}${c.phone || ''}`).join('; '),
     formData.contacts.map(c => c.email).join('; '),
     formData.contacts.map(c => c.occupation).join('; '),
     formData.contacts.map(c => c.language).join('; '),
@@ -147,5 +163,15 @@ export async function addRowToGoogleSheet(formData, sheetId, pdfId) {
     resource: { values }
   });
 
-  console.log(`[Sheets] Row added to tab "${sheetName}" with PDF link`);
+  console.log(`[Sheets] Row added to tab "${sheetName}" with ID ${nextId} and PDF link`);
+}
+
+function formatTimestamp(date = new Date()) {
+  const d = date;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // months 0-11
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }

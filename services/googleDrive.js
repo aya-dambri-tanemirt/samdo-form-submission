@@ -4,7 +4,7 @@ import path from 'path';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
-const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials', 'client_secret_drive.json');
+const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials', 'credentials.google.json');
 const TOKEN_PATH = path.join(process.cwd(), 'credentials', 'token_drive.json');
 
 function getDriveClient() {
@@ -18,18 +18,26 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth });
 }
 
-export async function getOrCreateFolder(folderName) {
+/**
+ * Create or fetch folder at root (no parent)
+ */
+export async function getOrCreateFolder(name) {
   const drive = getDriveClient();
 
   const res = await drive.files.list({
-    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    q: `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(id)'
   });
 
-  if (res.data.files.length > 0) return res.data.files[0].id;
+  if (res.data.files.length > 0) {
+    return res.data.files[0].id;
+  }
 
   const folder = await drive.files.create({
-    requestBody: { name: folderName, mimeType: 'application/vnd.google-apps.folder' },
+    requestBody: {
+      name,
+      mimeType: 'application/vnd.google-apps.folder'
+    },
     fields: 'id'
   });
 
@@ -37,13 +45,36 @@ export async function getOrCreateFolder(folderName) {
 }
 
 /**
- * Upload PDF buffer to Drive (fast, non-resumable)
- * Returns { id, webViewLink }
+ * Create or fetch folder inside a parent folder
+ */
+export async function getOrCreateFolderInParent(parentId, folderName) {
+  const drive = getDriveClient();
+
+  const res = await drive.files.list({
+    q: `'${parentId}' in parents and name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id)'
+  });
+
+  if (res.data.files.length > 0) return res.data.files[0].id;
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      parents: [parentId],
+      mimeType: 'application/vnd.google-apps.folder'
+    },
+    fields: 'id'
+  });
+
+  return folder.data.id;
+}
+
+/**
+ * Upload PDF to a folder
  */
 export async function uploadPDFToDrive(bufferOrStream, fileName, folderId) {
   const drive = getDriveClient();
 
-  // If multer.memoryStorage, bufferOrStream is Buffer; support both Buffer and Readable
   const mediaBody = Buffer.isBuffer(bufferOrStream)
     ? Readable.from(bufferOrStream)
     : bufferOrStream;
@@ -61,26 +92,5 @@ export async function uploadPDFToDrive(bufferOrStream, fileName, folderId) {
     fields: 'id, webViewLink'
   });
 
-  console.log(`[Drive] PDF uploaded ${fileName} (ID: ${res.data.id})`);
   return { id: res.data.id, webViewLink: res.data.webViewLink };
-}
-
-/**
- * Share file with an email silently (no notification)
- * Keep if you want to re-enable sharing later.
- */
-export async function shareFileWithEmail(fileId, email) {
-  const drive = getDriveClient();
-
-  await drive.permissions.create({
-    fileId,
-    requestBody: {
-      type: 'user',
-      role: 'reader',
-      emailAddress: email
-    },
-    sendNotificationEmail: false
-  });
-
-  console.log(`[Drive] File ${fileId} shared with ${email} (no notification)`);
 }

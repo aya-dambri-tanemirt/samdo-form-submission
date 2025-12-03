@@ -1,5 +1,11 @@
+// controllers/formController.js
 import { generatePDFBuffer } from '../services/pdfService.js';
-import { uploadPDFToDrive, getOrCreateFolder } from '../services/googleDrive.js';
+import {
+  getOrCreateFolder,
+  getOrCreateFolderInParent,
+  uploadPDFToDrive
+} from '../services/googleDrive.js';
+
 import { addRowToGoogleSheet, getOrCreateSheet } from '../services/excelService.js';
 
 export const submitForm = async (req, res) => {
@@ -23,21 +29,32 @@ export const submitForm = async (req, res) => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    const folderId = await getOrCreateFolder(today);
-    const sheetId = await getOrCreateSheet(today, folderId);
+    // Root folder
+    const ROOT_NAME = 'Submission';
+    const rootFolderId = await getOrCreateFolder(ROOT_NAME);
 
+    // Daily subfolder inside root
+    const todayFolderId = await getOrCreateFolderInParent(rootFolderId, today);
+
+    // Permanent sheet inside root
+    const SHEET_NAME = 'Submissions';
+    const sheetId = await getOrCreateSheet(SHEET_NAME, rootFolderId);
+
+    // Generate PDF
     const pdfBuffer = await generatePDFBuffer(formData, req.files);
-    const safeName = (formData.businessInfo.businessName || 'Submission').replace(/[^a-z0-9_\- ]/gi, '');
+    const safeName = (formData.businessInfo.businessName || 'Submission')
+      .replace(/[^a-z0-9_\- ]/gi, '');
     const pdfFileName = `${safeName}-${today}.pdf`;
 
-    const pdfRes = await uploadPDFToDrive(pdfBuffer, pdfFileName, folderId);
-    await addRowToGoogleSheet(formData, sheetId, pdfRes.id);
+    // Upload PDF into daily folder
+    const pdfRes = await uploadPDFToDrive(pdfBuffer, pdfFileName, todayFolderId);
 
-    const pdfBase64 = pdfBuffer.toString('base64');
+    // Append row to master sheet
+    await addRowToGoogleSheet(formData, sheetId, pdfRes.id);
 
     res.json({
       success: true,
-      pdfBase64,
+      pdfBase64: pdfBuffer.toString('base64'),
       pdfFileName,
       sheetId,
       pdfId: pdfRes.id,

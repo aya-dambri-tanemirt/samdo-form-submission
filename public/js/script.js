@@ -562,21 +562,33 @@ function showMessagingOptions(contacts) {
     modal.show();
 
 
-    $('#sendWhatsAppBtn').on('click', () => {
+    $('#sendWhatsAppBtn').on('click', async () => {
         const selected = $('input[name="whatsappContact"]:checked');
         if (!selected.length) return alert('Select a WhatsApp contact');
 
         const contact = contacts[parseInt(selected.val())];
-        const pdfUrl = window.lastSubmittedPDF.pdfLink;
 
-        const msg = encodeURIComponent(
-            `Hello ${contact.name},\nHere is your file:\n${pdfUrl}`
-        );
+        // Build full phone number with country code, no +
+        const fullNumber = contact.countryCode ? `${contact.countryCode}${contact.phone}` : contact.phone;
 
-        const cleaned = contact.phone.replace(/[^0-9]/g, "");
-        const waLink = `https://wa.me/${cleaned}?text=${msg}`;
+        const fd = new FormData();
+        fd.append('to', fullNumber); // send full number
+        fd.append('message', `Hello ${contact.name}, please find your PDF attached.`);
+        
+        // Convert base64 → file
+        const pdfBlob = b64toBlob(window.lastSubmittedPDF.pdfBase64, 'application/pdf');
+        fd.append('attachment', pdfBlob, window.lastSubmittedPDF.pdfFileName);
 
-        window.open(waLink, "_blank");
+        try {
+            const res = await fetch('/api/send-whatsapp', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (data.success) alert('WhatsApp message sent successfully!');
+            else alert('Failed to send WhatsApp message: ' + data.message);
+        } catch (err) {
+            console.error(err);
+            alert('Error sending WhatsApp message');
+        }
     });
 
 
